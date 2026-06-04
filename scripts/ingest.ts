@@ -1,192 +1,170 @@
+import "dotenv/config";
 import fs from "fs";
 import path from "path";
 
-function loadJson(filePath: string) {
-  return JSON.parse(
-    fs.readFileSync(filePath, "utf-8")
-  );
-}
+import { PrismaClient } from "../src/generated/prisma/client.js";
 
-function analyzeSample(sampleName: string) {
-  console.log("\n=================================");
-  console.log(` ANALYZING ${sampleName.toUpperCase()}`);
-  console.log("=================================\n");
+import {
+  normalizeMerchant,
+} from "../src/services/merchantNormalizer.js";
 
-  const transactions = loadJson(
-    path.join("data", sampleName, "transactions.json")
-  );
+const prisma = new PrismaClient();
 
-  const funds = loadJson(
-    path.join("data", sampleName, "funds.json")
-  );
+async function main() {
+ 
+  const DATA_DIR = process.env.DATA_DIR?.trim();
 
-  const holdings = loadJson(
-    path.join("data", sampleName, "holdings.json")
-  );
-
-  // ---------------- TRANSACTIONS ----------------
-
-  console.log("===== TRANSACTIONS =====");
-
-  console.log("Total Transactions:");
-  console.log(transactions.length);
-
-  console.log("\nTransaction Fields:");
-  console.log(Object.keys(transactions[0]));
-
-  const dates = transactions.map(
-    (t: any) => new Date(t.date).getTime()
-  );
-
-  console.log("\nDate Range:");
-  console.log(
-    "Start:",
-    new Date(Math.min(...dates))
-  );
-  console.log(
-    "End:",
-    new Date(Math.max(...dates))
-  );
-
-  const categories = [
-    ...new Set(
-      transactions.map(
-        (t: any) => t.category
-      )
-    ),
-  ];
-
-  console.log("\nCategories:");
-  console.log(categories);
-
-  const refunds = transactions.filter(
-    (t: any) => t.amount < 0
-  );
-
-  console.log("\nRefund Count:");
-  console.log(refunds.length);
-
-  console.log("\nSample Refunds:");
-  console.log(refunds.slice(0, 5));
-
-  const transfers = transactions.filter(
-    (t: any) =>
-      String(t.category)
-        .toLowerCase()
-        .trim() === "transfer"
-  );
-
-  console.log("\nTransfer Count:");
-  console.log(transfers.length);
-
-  const merchants = [
-    ...new Set(
-      transactions.map(
-        (t: any) => t.merchant
-      )
-    ),
-  ];
-
-  console.log("\nMerchant Count:");
-  console.log(merchants.length);
-
-  console.log("\nFirst 50 Merchants:");
-  console.log(
-    merchants.slice(0, 50)
-  );
-
-  const merchantChecks = [
-    "SWIGGY",
-    "ZEPTO",
-    "APOLLO",
-    "UBER",
-  ];
-
-  console.log("\nMerchant Alias Analysis:");
-
-  merchantChecks.forEach((keyword) => {
-    const matches = [
-      ...new Set(
-        transactions
-          .filter((t: any) =>
-            String(t.merchant)
-              .toUpperCase()
-              .includes(keyword)
-          )
-          .map(
-            (t: any) => t.merchant
-          )
-      ),
-    ];
-
-    console.log(`\n${keyword}:`);
-    console.log(matches);
-  });
-
-  console.log("\nSample Memos:");
-
-  console.log(
-    transactions
-      .slice(0, 20)
-      .map((t: any) => t.memo)
-  );
-
-  // ---------------- FUNDS ----------------
-
-  console.log("\n\n===== FUNDS =====");
-
-  console.log("Total Funds:");
-  console.log(funds.length);
-
-  console.log("\nFund Fields:");
-  console.log(Object.keys(funds[0]));
-
-  if (funds[0]?.nav) {
-    console.log("\nNAV Sample:");
-    console.log(
-      funds[0].nav.slice(0, 3)
-    );
-
-    console.log("\nNAV Count:");
-    console.log(
-      funds[0].nav.length
-    );
+  if (!DATA_DIR) {
+    throw new Error("DATA_DIR missing");
   }
 
-  // ---------------- HOLDINGS ----------------
+  console.log(`Using data from: ${DATA_DIR}`);
 
-  console.log("\n\n===== HOLDINGS =====");
+  // =========================
+  // TRANSACTIONS
+  // =========================
 
-  console.log("Total Holdings:");
-  console.log(holdings.length);
-
-  console.log("\nHolding Fields:");
-  console.log(
-    Object.keys(holdings[0])
-  );
-
-  const fundIds = new Set(
-    funds.map(
-      (f: any) => f.id
+  const transactions = JSON.parse(
+    fs.readFileSync(
+      path.join(DATA_DIR, "transactions.json"),
+      "utf-8"
     )
   );
 
-  const missingRelations =
-    holdings.filter(
-      (h: any) =>
-        !fundIds.has(h.fund_id)
-    );
-
-  console.log(
-    "\nMissing Fund Relations:"
+  const transactionRows = transactions.map(
+    (t: any) => ({
+      id: t.id,
+      date: new Date(t.date),
+      merchant: t.merchant,
+      normalizedMerchant: normalizeMerchant(
+        t.merchant
+      ),
+      category: t.category,
+      amount: t.amount,
+      currency: t.currency,
+      memo: t.memo,
+    })
   );
 
-  console.log(missingRelations);
+  await prisma.transaction.deleteMany();
 
-  console.log("\nDone.");
+  await prisma.transaction.createMany({
+    data: transactionRows,
+  });
+
+  console.log(
+    `Transactions inserted: ${transactionRows.length}`
+  );
+
+  // =========================
+  // FUNDS
+  // =========================
+
+  const funds = JSON.parse(
+    fs.readFileSync(
+      path.join(DATA_DIR, "funds.json"),
+      "utf-8"
+    )
+  );
+
+  // delete child tables first
+  await prisma.fundNav.deleteMany();
+  await prisma.holding.deleteMany();
+  await prisma.fund.deleteMany();
+
+  const fundRows = funds.map(
+    (f: any) => ({
+      id: f.id,
+      name: f.name,
+      category: f.category,
+    })
+  );
+
+  await prisma.fund.createMany({
+    data: fundRows,
+  });
+
+  console.log(
+    `Funds inserted: ${fundRows.length}`
+  );
+
+  // =========================
+  // NAV HISTORY
+  // =========================
+
+  const navRows: any[] = [];
+
+  for (const fund of funds) {
+    for (const point of fund.nav) {
+      navRows.push({
+        fundId: fund.id,
+        date: new Date(point.date),
+
+        // your dataset uses "value"
+        nav: point.value,
+      });
+    }
+  }
+
+  await prisma.fundNav.createMany({
+    data: navRows,
+  });
+
+  console.log(
+    `NAV records inserted: ${navRows.length}`
+  );
+
+  // =========================
+  // HOLDINGS
+  // =========================
+
+  const holdings = JSON.parse(
+    fs.readFileSync(
+      path.join(DATA_DIR, "holdings.json"),
+      "utf-8"
+    )
+  );
+
+  const holdingRows = holdings.map(
+    (h: any) => ({
+      fundId: h.fund_id,
+      units: h.units,
+      purchaseDate: new Date(
+        h.purchase_date
+      ),
+      purchaseNav: h.purchase_nav,
+    })
+  );
+
+  await prisma.holding.createMany({
+    data: holdingRows,
+  });
+
+  console.log(
+    `Holdings inserted: ${holdingRows.length}`
+  );
+
+  // =========================
+  // SUMMARY
+  // =========================
+
+  console.log(`
+=================================
+INGESTION COMPLETE
+=================================
+
+Transactions inserted: ${transactionRows.length}
+Funds inserted: ${fundRows.length}
+NAV records inserted: ${navRows.length}
+Holdings inserted: ${holdingRows.length}
+`);
 }
 
-// Analyze all snapshots
-
-["sample_a", "sample_b", "sample_c"]
-  .forEach(analyzeSample);
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
