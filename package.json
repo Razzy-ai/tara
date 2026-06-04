@@ -18,6 +18,8 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.81",
+    "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/openai": "^3.0.67",
     "@mastra/core": "^1.38.0",
     "@mastra/duckdb": "^1.4.1",
