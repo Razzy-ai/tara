@@ -1,3 +1,4 @@
+import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
 import {
@@ -6,61 +7,64 @@ import {
   getBestHolding,
 } from "../services/holdingService.js";
 
-export const queryHoldingsSchema =
-  z.object({
-    holdingId:
-      z.number().optional(),
+export const queryHoldings =
+  createTool({
+    id: "queryHoldings",
 
-    operation: z.enum([
-      "holdingReturn",
-      "portfolioValue",
-      "bestHolding",
-    ]),
-  });
+    description: `
+Use for:
+- portfolio value
+- holdings
+- investments
+- gains
+- investment returns
+`,
 
-export async function queryHoldings(
-  input: z.infer<
-    typeof queryHoldingsSchema
-  >
-) {
-  try {
-    console.log({
-      tool: "queryHoldings",
-      operation: input.operation,
-      timestamp: new Date(),
-    });
+    inputSchema: z.object({
+      holdingId:
+        z.number().optional(),
 
-    switch (input.operation) {
-      case "holdingReturn":
-        if (!input.holdingId) {
-          return {
-            error:
-              "holdingId is required",
-          };
+      operation: z.enum([
+        "holdingReturn",
+        "portfolioValue",
+        "bestHolding",
+      ]),
+    }),
+
+    execute: async (
+      context,
+    ) => {
+      try {
+        switch (
+          context.operation
+        ) {
+          case "holdingReturn":
+            if (
+              !context.holdingId
+            ) {
+              return {
+                error:
+                  "holdingId required",
+              };
+            }
+
+            return getHoldingReturn(
+              context.holdingId
+            );
+
+          case "portfolioValue":
+            return getPortfolioValue();
+
+          case "bestHolding":
+            return getBestHolding();
         }
+      } catch (error) {
+        console.error(error);
 
-        return getHoldingReturn(
-          input.holdingId
-        );
-
-      case "portfolioValue":
-        return getPortfolioValue();
-
-      case "bestHolding":
-        return getBestHolding();
-
-      default:
         return {
           error:
-            "Unsupported holding operation",
+            "Unable to retrieve holding data",
         };
-    }
-  } catch (error) {
-    console.error(error);
-
-    return {
-      error:
-        "Unable to retrieve holding data",
-    };
-  }
-}
+      }
+    },
+  });

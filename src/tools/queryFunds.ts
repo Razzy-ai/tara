@@ -1,3 +1,4 @@
+import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
 import {
@@ -5,56 +6,59 @@ import {
   rankFunds,
 } from "../services/fundService.js";
 
-export const queryFundsSchema =
-  z.object({
-    fundName: z.string().optional(),
+export const queryFunds =
+  createTool({
+    id: "queryFunds",
 
-    operation: z.enum([
-      "fundReturn",
-      "rankFunds",
-    ]),
-  });
+    description: `
+Use for:
+- fund returns
+- fund rankings
+- best funds
+- compare funds
+`,
 
-export async function queryFunds(
-  input: z.infer<
-    typeof queryFundsSchema
-  >
-) {
-  try {
-    console.log({
-      tool: "queryFunds",
-      operation: input.operation,
-      timestamp: new Date(),
-    });
+    inputSchema: z.object({
+      fundName:
+        z.string().optional(),
 
-    switch (input.operation) {
-      case "fundReturn":
-        if (!input.fundName) {
-          return {
-            error:
-              "fundName is required",
-          };
+      operation: z.enum([
+        "fundReturn",
+        "rankFunds",
+      ]),
+    }),
+
+    execute: async (
+      context,
+    ) => {
+      try {
+        switch (
+          context.operation
+        ) {
+          case "fundReturn":
+            if (
+              !context.fundName
+            ) {
+              return {
+                error:
+                  "fundName required",
+              };
+            }
+
+            return getFundReturn(
+              context.fundName
+            );
+
+          case "rankFunds":
+            return rankFunds();
         }
+      } catch (error) {
+        console.error(error);
 
-        return getFundReturn(
-          input.fundName
-        );
-
-      case "rankFunds":
-        return rankFunds();
-
-      default:
         return {
           error:
-            "Unsupported fund operation",
+            "Unable to retrieve fund data",
         };
-    }
-  } catch (error) {
-    console.error(error);
-
-    return {
-      error:
-        "Unable to retrieve fund data",
-    };
-  }
-}
+      }
+    },
+  });

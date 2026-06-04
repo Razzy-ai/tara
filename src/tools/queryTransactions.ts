@@ -1,14 +1,17 @@
+import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import type { TransactionFilters } from "../services/transactionService.js";
+
 import {
   getTransactions,
   getNetSpend,
   getTopMerchants,
   getMonthlySpend,
   getBiggestExpense,
+  getCategoryGrowth,
+  type TransactionFilters,
 } from "../services/transactionService.js";
 
-export const queryTransactionsSchema = z.object({
+const inputSchema = z.object({
   category: z.string().optional(),
   merchant: z.string().optional(),
   startDate: z.string().optional(),
@@ -25,7 +28,7 @@ export const queryTransactionsSchema = z.object({
 });
 
 function buildFilters(
-  input: z.infer<typeof queryTransactionsSchema>
+  input: z.infer<typeof inputSchema>
 ): TransactionFilters {
   const filters: TransactionFilters = {};
 
@@ -47,54 +50,76 @@ function buildFilters(
 
   return filters;
 }
-export async function queryTransactions(
-  input: z.infer<typeof queryTransactionsSchema>
-) {
-  try {
-    console.log({
-      tool: "queryTransactions",
-      operation: input.operation,
-      timestamp: new Date(),
-    });
 
-    switch (input.operation) {
-      case "transactions":
-        return getTransactions(
-          buildFilters(input)
-        );
+export const queryTransactions =
+  createTool({
+    id: "queryTransactions",
 
-      case "netSpend":
-        return getNetSpend(
-          buildFilters(input)
-        );
+    description: `
+Use for:
+- spending
+- expenses
+- merchants
+- categories
+- refunds
+- comparisons
+- monthly spend
+`,
 
-      case "topMerchants":
-        return getTopMerchants();
+    inputSchema,
 
-      case "monthlySpend":
-        return getMonthlySpend();
+    execute: async (
+      context
+    ) => {
+      try {
+        console.log({
+          tool:
+            "queryTransactions",
+          operation:
+            context.operation,
+          timestamp:
+            new Date(),
+        });
 
-      case "biggestExpense":
-        return getBiggestExpense();
+        switch (
+          context.operation
+        ) {
+          case "transactions":
+            return getTransactions(
+              buildFilters(
+                context
+              )
+            );
 
-      case "categoryGrowth":
+          case "netSpend":
+            return getNetSpend(
+              buildFilters(
+                context
+              )
+            );
+
+          case "topMerchants":
+            return getTopMerchants();
+
+          case "monthlySpend":
+            return getMonthlySpend();
+
+          case "biggestExpense":
+            return getBiggestExpense();
+
+          case "categoryGrowth":
+            return {
+              error:
+                "categoryGrowth not implemented",
+            };
+        }
+      } catch (error) {
+        console.error(error);
+
         return {
           error:
-            "categoryGrowth not implemented yet",
+            "Unable to retrieve transaction data",
         };
-
-      default:
-        return {
-          error:
-            "Unsupported transaction operation",
-        };
-    }
-  } catch (error) {
-    console.error(error);
-
-    return {
-      error:
-        "Unable to retrieve transaction data",
-    };
-  }
-}
+      }
+    },
+  });

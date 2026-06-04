@@ -1,70 +1,69 @@
-import {
-  queryTransactions,
-} from "../src/tools/queryTransactions.js";
-
-import {
-  queryFunds,
-} from "../src/tools/queryFunds.js";
-
-import {
-  queryHoldings,
-} from "../src/tools/queryHoldings.js";
-
-import {
-  recurringSubscriptions,
-} from "../src/tools/recurringSubscriptions.js";
+import { queryTransactions } from "../src/tools/queryTransactions.js";
+import { queryFunds } from "../src/tools/queryFunds.js";
+import { queryHoldings } from "../src/tools/queryHoldings.js";
+import { recurringSubscriptions } from "../src/tools/recurringSubscriptions.js";
 
 async function main() {
+  const toolContext = {} as any;
+
+  console.log("\n===== TRANSACTION TOOL =====\n");
+
   console.log(
-    "\n===== TRANSACTION TOOL =====\n"
+    await queryTransactions.execute!(
+      {
+        operation: "netSpend",
+      },
+      toolContext
+    )
   );
 
   console.log(
-    await queryTransactions({
-      operation: "netSpend",
-    })
+    await queryTransactions.execute!(
+      {
+        operation: "topMerchants",
+      },
+      toolContext
+    )
+  );
+
+  console.log("\n===== FUND TOOL =====\n");
+
+  console.log(
+    await queryFunds.execute!(
+      {
+        operation: "rankFunds",
+      },
+      toolContext
+    )
+  );
+
+  console.log("\n===== HOLDING TOOL =====\n");
+
+  console.log(
+    await queryHoldings.execute!(
+      {
+        operation: "portfolioValue",
+      },
+      toolContext
+    )
   );
 
   console.log(
-    await queryTransactions({
-      operation: "topMerchants",
-    })
+    await queryHoldings.execute!(
+      {
+        operation: "bestHolding",
+      },
+      toolContext
+    )
   );
 
-  console.log(
-    "\n===== FUND TOOL =====\n"
-  );
+  console.log("\n===== RECURRING TOOL =====\n");
 
   console.log(
-    await queryFunds({
-      operation: "rankFunds",
-    })
-  );
-
-  console.log(
-    "\n===== HOLDING TOOL =====\n"
-  );
-
-  console.log(
-    await queryHoldings({
-      operation:
-        "portfolioValue",
-    })
-  );
-
-  console.log(
-    await queryHoldings({
-      operation:
-        "bestHolding",
-    })
-  );
-
-  console.log(
-    "\n===== RECURRING TOOL =====\n"
-  );
-
-  console.log(
-    await recurringSubscriptions()
+    await recurringSubscriptions.execute!(
+      {},
+      toolContext
+    )
   );
 }
 

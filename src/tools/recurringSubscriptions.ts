@@ -1,22 +1,34 @@
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+
 import {
   detectRecurringSubscriptions,
 } from "../services/recurringService.js";
 
-export async function recurringSubscriptions() {
-  try {
-    console.log({
-      tool:
-        "recurringSubscriptions",
-      timestamp: new Date(),
-    });
+export const recurringSubscriptions =
+  createTool({
+    id:
+      "recurringSubscriptions",
 
-    return detectRecurringSubscriptions();
-  } catch (error) {
-    console.error(error);
+    description: `
+Use for:
+- subscriptions
+- recurring payments
+- monthly recurring charges
+`,
 
-    return {
-      error:
-        "Unable to detect recurring subscriptions",
-    };
-  }
-}
+    inputSchema: z.object({}),
+
+    execute: async () => {
+      try {
+        return detectRecurringSubscriptions();
+      } catch (error) {
+        console.error(error);
+
+        return {
+          error:
+            "Unable to detect recurring subscriptions",
+        };
+      }
+    },
+  });
