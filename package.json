@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "mastra dev",
+    "dev": "tsx watch src/mastra/index.ts",
+    "ingest": "tsx scripts/ingest.ts",
     "build": "mastra build",
     "start": "mastra start"
   },
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "mastra": "^1.11.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
