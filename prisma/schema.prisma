@@ -13,3 +13,50 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Transaction {
+  id                   String   @id
+  date                 DateTime
+  merchant             String
+  normalizedMerchant   String
+  category             String
+  amount               Float
+  currency             String
+  memo                 String?
+  @@index([date])
+  @@index([merchant])
+  @@index([normalizedMerchant])
+  @@index([category])
+}
+
+model Fund {
+  id         String @id
+  name       String
+  category   String
+  navs       FundNav[]
+  holdings   Holding[]
+}
+
+model FundNav {
+
+  id         Int @id @default(autoincrement())
+  fundId     String
+  fund       Fund @relation( fields:[fundId],references:[id] )
+  date       DateTime
+  nav        Float
+  @@unique([fundId,date])
+  @@index([fundId])
+  @@index([date])
+}
+
+model Holding {
+
+  id            Int @id @default(autoincrement())
+  fundId        String
+  fund          Fund @relation(fields:[fundId], references:[id])
+  units         Float
+  purchaseDate  DateTime
+  purchaseNav   Float
+  @@index([fundId])
+}
+
