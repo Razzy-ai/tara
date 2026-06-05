@@ -46,6 +46,7 @@ export async function getTransactions(
 ) {
   return prisma.transaction.findMany({
     where: buildWhere(filters),
+    take:10,
     orderBy: {
       date: "desc",
     },

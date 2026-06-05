@@ -1,125 +1,66 @@
 import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
+import { makeSchema } from "../utils/makeSchema.js";
 
 import {
   getTransactions,
   getNetSpend,
-  getTopMerchants,
-  getMonthlySpend,
-  getBiggestExpense,
-  getCategoryGrowth,
   type TransactionFilters,
 } from "../services/transactionService.js";
 
-const inputSchema = z.object({
-  category: z.string().optional(),
-  merchant: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+type TransactionInput = {
+  operation: "netSpend" | "transactions";
+  category: string;
+  merchant: string;
+  startDate: string;
+  endDate: string;
+};
 
-  operation: z.enum([
-    "transactions",
-    "netSpend",
-    "topMerchants",
-    "monthlySpend",
-    "biggestExpense",
-    "categoryGrowth",
-  ]),
-});
+export const queryTransactions = createTool({
+  id: "queryTransactions",
+  description: "Use for: spending by category, spending by merchant, net spend, filtered transactions",
 
-function buildFilters(
-  input: z.infer<typeof inputSchema>
-): TransactionFilters {
-  const filters: TransactionFilters = {};
-
-  if (input.category) {
-    filters.category = input.category;
-  }
-
-  if (input.merchant) {
-    filters.merchant = input.merchant;
-  }
-
-  if (input.startDate) {
-    filters.startDate = new Date(input.startDate);
-  }
-
-  if (input.endDate) {
-    filters.endDate = new Date(input.endDate);
-  }
-
-  return filters;
-}
-
-export const queryTransactions =
-  createTool({
-    id: "queryTransactions",
-
-    description: `
-Use for:
-- spending
-- expenses
-- merchants
-- categories
-- refunds
-- comparisons
-- monthly spend
-`,
-
-    inputSchema,
-
-    execute: async (
-      context
-    ) => {
-      try {
-        console.log({
-          tool:
-            "queryTransactions",
-          operation:
-            context.operation,
-          timestamp:
-            new Date(),
-        });
-
-        switch (
-          context.operation
-        ) {
-          case "transactions":
-            return getTransactions(
-              buildFilters(
-                context
-              )
-            );
-
-          case "netSpend":
-            return getNetSpend(
-              buildFilters(
-                context
-              )
-            );
-
-          case "topMerchants":
-            return getTopMerchants();
-
-          case "monthlySpend":
-            return getMonthlySpend();
-
-          case "biggestExpense":
-            return getBiggestExpense();
-
-          case "categoryGrowth":
-            return {
-              error:
-                "categoryGrowth not implemented",
-            };
-        }
-      } catch (error) {
-        console.error(error);
-
-        return {
-          error:
-            "Unable to retrieve transaction data",
-        };
-      }
+  inputSchema: makeSchema({
+    type: "object",
+    properties: {
+      operation: { type: "string", enum: ["netSpend", "transactions"] },
+      category:  { type: "string" },
+      merchant:  { type: "string" },
+      startDate: { type: "string" },
+      endDate:   { type: "string" },
     },
-  });
+    required: ["operation"],
+    additionalProperties: false,
+  }, { category: "", merchant: "", startDate: "", endDate: "" }),
+
+
+  execute: async (inputData: unknown) => {
+    const context = inputData as TransactionInput;
+    try {
+      console.log({ tool: "queryTransactions", operation: context.operation, timestamp: new Date() });
+
+      const filters: TransactionFilters = {};
+      if (context.category  && context.category  !== "") filters.category  = context.category;
+      if (context.merchant  && context.merchant  !== "") filters.merchant  = context.merchant;
+      if (context.startDate && context.startDate !== "") filters.startDate = new Date(context.startDate);
+      if (context.endDate   && context.endDate   !== "") filters.endDate   = new Date(context.endDate);
+
+      switch (context.operation) {
+        case "netSpend":
+          return getNetSpend(filters);
+
+        case "transactions": {
+          const data = await getTransactions(filters);
+          const total = data.reduce((sum: number, t: any) => sum + t.amount, 0);
+          return {
+            count: data.length,
+            total: total.toFixed(2),
+            currency: data[0]?.currency ?? "INR",
+          };
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      return { error: "Unable to retrieve transaction data" };
+    }
+  },
+});

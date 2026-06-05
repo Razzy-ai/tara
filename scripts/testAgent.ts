@@ -1,4 +1,34 @@
+const _origStringify = JSON.stringify;
+(JSON as any).stringify = function(value: any, replacer?: any, space?: any) {
+  const result = _origStringify.call(this, value, replacer, space);
+  if (typeof result === "string" && result.includes("x-optional")) {
+    try {
+      const parsed = JSON.parse(result);
+      if (parsed?.tools) {
+        for (const tool of parsed.tools) {
+          const params = tool?.function?.parameters;
+          if (params) {
+            delete params["$schema"];
+            delete params["x-optional"];
+            if (params.required && params.properties) {
+              params.required = params.required.filter(
+                (k: string) => k in params.properties && k === "operation"
+              );
+            }
+          }
+        }
+        return _origStringify.call(this, parsed, replacer, space);
+      }
+    } catch {}
+  }
+  return result;
+};
+
 import { taraAgent } from "../src/agents/taraAgent.js";
+
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function run() {
   const questions = [
@@ -17,10 +47,15 @@ async function run() {
   for (const q of questions) {
     console.log("\n=========================");
     console.log("Q:", q);
+    try {
+      const response = await taraAgent.generate(q);
+      console.log("A:", response.text);
+    } catch (err) {
+      console.error("Error:", (err as any)?.message || err);
+    }
 
-    const response = await taraAgent.generate(q);
-
-    console.log("A:", response.text);
+    console.log("⏳ Waiting 15 seconds before next question...");
+    await sleep(15000);
   }
 }
 
