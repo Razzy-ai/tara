@@ -15,7 +15,9 @@ export const queryMonthlySpend = createTool({
 
   execute: async () => {
     try {
-      return getMonthlySpend();
+      const data = await getMonthlySpend();
+      if (!data || data.length === 0) return { result: "No monthly data found" };
+      return { months: data };
     } catch (error) {
       console.error(error);
       return { error: "Unable to retrieve monthly spend" };

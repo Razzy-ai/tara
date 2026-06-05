@@ -15,7 +15,9 @@ export const queryBiggestExpense = createTool({
 
   execute: async () => {
     try {
-      return getBiggestExpense();
+      const data = await getBiggestExpense();
+      if (!data) return { result: "No expenses found" };
+      return { expense: data };
     } catch (error) {
       console.error(error);
       return { error: "Unable to retrieve biggest expense" };

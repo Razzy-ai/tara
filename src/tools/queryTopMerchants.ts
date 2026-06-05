@@ -15,7 +15,9 @@ export const queryTopMerchants = createTool({
 
   execute: async () => {
     try {
-      return getTopMerchants();
+      const data = await getTopMerchants();
+      if (!data || data.length === 0) return { result: "No merchants found" };
+      return { merchants: data };
     } catch (error) {
       console.error(error);
       return { error: "Unable to retrieve merchants" };

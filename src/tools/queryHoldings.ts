@@ -34,8 +34,11 @@ export const queryHoldings = createTool({
         case "portfolioValue":
           return getPortfolioValue();
 
-        case "bestHolding":
-          return getBestHolding();
+        case "bestHolding": {
+          const data = await getBestHolding();
+          if (!data) return { result: "No holdings found" };
+          return { bestHolding: data };
+        }
       }
     } catch (error) {
       console.error(error);

@@ -1,18 +1,19 @@
 const _origStringify = JSON.stringify;
 (JSON as any).stringify = function(value: any, replacer?: any, space?: any) {
   const result = _origStringify.call(this, value, replacer, space);
-  if (typeof result === "string" && result.includes("x-optional")) {
+  if (typeof result === "string" && result.includes('"tools"')) {
     try {
       const parsed = JSON.parse(result);
-      if (parsed?.tools) {
+      if (parsed?.tools && Array.isArray(parsed.tools)) {
         for (const tool of parsed.tools) {
           const params = tool?.function?.parameters;
-          if (params) {
+          if (params && typeof params === "object") {
             delete params["$schema"];
             delete params["x-optional"];
+            // Only keep operation in required — everything else is optional
             if (params.required && params.properties) {
               params.required = params.required.filter(
-                (k: string) => k in params.properties && k === "operation"
+                (k: string) => k === "operation" && k in params.properties
               );
             }
           }

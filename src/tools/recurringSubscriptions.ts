@@ -15,7 +15,9 @@ export const recurringSubscriptions = createTool({
 
   execute: async () => {
     try {
-      return detectRecurringSubscriptions();
+      const data = await detectRecurringSubscriptions();
+      if (!data || data.length === 0) return { result: "No recurring subscriptions found" };
+      return { subscriptions: data };
     } catch (error) {
       console.error(error);
       return { error: "Unable to detect recurring subscriptions" };

@@ -31,8 +31,11 @@ export const queryFunds = createTool({
           }
           return getFundReturn(context.fundName);
 
-        case "rankFunds":
-          return rankFunds();
+        case "rankFunds": {
+          const data = await rankFunds();
+          if (!data || data.length === 0) return { result: "No fund data found" };
+          return { funds: data };
+        }
       }
     } catch (error) {
       console.error(error);

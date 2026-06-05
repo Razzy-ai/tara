@@ -1,3 +1,22 @@
 {"requestId":"f3a4c48a-06df-49a7-a927-12b79ad75de4","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-04T15:20:32.333Z"}
 {"requestId":"f3a4c48a-06df-49a7-a927-12b79ad75de4","stage":"agent_started"}
 {"requestId":"f3a4c48a-06df-49a7-a927-12b79ad75de4","stage":"error","message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\nPlease retry in 27.567701558s."}
+{"requestId":"4bccf135-1352-407d-ade8-2fcd4e40222a","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T10:20:38.182Z"}
+{"requestId":"4bccf135-1352-407d-ade8-2fcd4e40222a","stage":"agent_started"}
+{"requestId":"4bccf135-1352-407d-ade8-2fcd4e40222a","stage":"error","message":"Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details."}
+{"requestId":"6920fb78-7cb7-4415-bdfc-1f14840a363c","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T10:23:12.554Z"}
+{"requestId":"6920fb78-7cb7-4415-bdfc-1f14840a363c","stage":"agent_started"}
+{"requestId":"6920fb78-7cb7-4415-bdfc-1f14840a363c","stage":"error","message":"Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details."}
+{"requestId":"45c02fa3-8774-48de-9ef1-abc5c7c2446b","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T10:24:21.980Z"}
+{"requestId":"45c02fa3-8774-48de-9ef1-abc5c7c2446b","stage":"agent_started"}
+{"requestId":"45c02fa3-8774-48de-9ef1-abc5c7c2446b","stage":"error","message":"The model `llama3-groq-70b-8192-tool-use-preview` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead."}
+{"requestId":"bfce12fd-7112-4ba5-924a-73661e13484b","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T10:27:27.079Z"}
+{"requestId":"bfce12fd-7112-4ba5-924a-73661e13484b","stage":"agent_started"}
+{"requestId":"bfce12fd-7112-4ba5-924a-73661e13484b","stage":"error","message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01ktb06x72f18by0dbctb0ddh9` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99452, Requested 1108. Please try again in 8m3.84s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing"}
+{"requestId":"d87b0d62-21cd-40b4-97b1-88582d173b61","stage":"invalid_request","error":{"formErrors":["Invalid input: expected object, received undefined"],"fieldErrors":{}},"timestamp":"2026-06-05T11:13:27.809Z"}
+{"requestId":"7b5fbe7f-6e5b-4b1b-b6af-e5c65dddc5c5","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T11:13:41.614Z"}
+{"requestId":"7b5fbe7f-6e5b-4b1b-b6af-e5c65dddc5c5","stage":"agent_started"}
+{"requestId":"7b5fbe7f-6e5b-4b1b-b6af-e5c65dddc5c5","stage":"error","message":"Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details."}
+{"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T11:15:18.351Z"}
+{"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"agent_started"}
+{"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"error","message":"Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details."}

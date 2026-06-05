@@ -70,6 +70,8 @@ router.post("/ask", async (req, res) => {
       answer: response.text,
     });
   } catch (error) {
+
+    console.error("FULL ERROR:", error);
     /**
      * Step 6: Error logging
      */
