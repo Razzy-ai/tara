@@ -101,7 +101,7 @@ Every number in an agent answer originates from a Prisma query against the Postg
 
 ## Evals
 
-`eval/runEval.ts` posts 12 questions to `http://localhost:3000/ask` against `sample_a`. Cases cover:
+`eval/agentSmokeTest.ts` posts 14 questions to `http://localhost:3000/ask` against `sample_a`. Cases cover:
 
 - Single lookup (biggest expense, portfolio value)
 - Date-filtered spend (Q1 2025 total spend)
