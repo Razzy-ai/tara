@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.use(logger);
 
-app.use("/api", askRoute);
+app.use("/", askRoute);
 
 app.get("/health", (_, res) => {
   res.json({ status: "ok" });

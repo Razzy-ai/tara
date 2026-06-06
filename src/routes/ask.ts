@@ -11,80 +11,83 @@ const AskSchema = z.object({
   question: z.string().min(1),
 });
 
+// Tables each tool reads — used for observability, never changes logic
+const TOOL_TABLES: Record<string, string[]> = {
+  queryTransactions:    ["Transaction"],
+  queryFunds:           ["Fund", "FundNav"],
+  queryHoldings:        ["Holding", "Fund", "FundNav"],
+  recurringSubscriptions: ["Transaction"],
+};
+
 router.post("/ask", async (req, res) => {
   const requestId = uuid();
+  const start = Date.now();
 
   try {
-    /**
-     * Step 1: Validate request
-     */
     const parsed = AskSchema.safeParse(req.body);
 
     if (!parsed.success) {
       logEvent({
-        requestId,
-        stage: "invalid_request",
+        request_id: requestId,
+        status: "invalid_request",
         error: parsed.error.flatten(),
-        timestamp: new Date().toISOString(),
+        latency_ms: Date.now() - start,
       });
-
-      return res.status(400).json({
-        error: "Invalid request",
-      });
+      return res.status(400).json({ error: "Invalid request" });
     }
 
     const question = parsed.data.question;
 
-    /**
-     * Step 2: Log request received
-     */
-    logEvent({
-      requestId,
-      stage: "request_received",
-      question,
-      timestamp: new Date().toISOString(),
-    });
-
-    /**
-     * Step 3: Log agent start
-     */
-    logEvent({
-      requestId,
-      stage: "agent_started",
-    });
-
-    /**
-     * Step 4: Call agent
-     */
     const response = await taraAgent.generate(question);
 
-    /**
-     * Step 5: Log response sent
-     */
-    logEvent({
-      requestId,
-      stage: "response_sent",
+    // Collect tool-call trace — ToolCallChunk has { type, payload: { toolName, args } }
+    const toolCalls = (response.toolCalls ?? []) as Array<{
+      payload?: { toolName?: string; args?: Record<string, unknown> };
+      toolName?: string;
+      args?: Record<string, unknown>;
+    }>;
+
+    const tools = toolCalls.map((tc) =>
+      tc.payload?.toolName ?? tc.toolName ?? "unknown"
+    );
+
+    const toolInputs = toolCalls.map((tc) => {
+      const args = tc.payload?.args ?? tc.args ?? {};
+      const toolName = tc.payload?.toolName ?? tc.toolName ?? "unknown";
+      // Log keys/shapes only — never raw string values that could contain secrets
+      return {
+        tool: toolName,
+        inputKeys: Object.keys(args),
+        operation: typeof args.operation === "string" ? args.operation : undefined,
+      };
     });
 
-    return res.json({
-      answer: response.text,
+    const tablesRead = [
+      ...new Set(
+        tools.flatMap((name) => TOOL_TABLES[name] ?? [])
+      ),
+    ];
+
+    logEvent({
+      request_id: requestId,
+      question,
+      tools,
+      tool_inputs: toolInputs,
+      tables_read: tablesRead,
+      latency_ms: Date.now() - start,
+      status: "success",
     });
+
+    return res.json({ answer: response.text });
   } catch (error) {
-
-    console.error("FULL ERROR:", error);
-    /**
-     * Step 6: Error logging
-     */
     logEvent({
-      requestId,
-      stage: "error",
-      message:
-        error instanceof Error ? error.message : "unknown error",
+      request_id: requestId,
+      status: "error",
+      error: error instanceof Error ? error.message : "unknown error",
+      latency_ms: Date.now() - start,
     });
 
-    return res.status(500).json({
-      answer: "Unable to process request.",
-    });
+    return res.status(500).json({ answer: "Unable to process request." });
   }
 });
 

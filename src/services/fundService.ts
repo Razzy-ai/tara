@@ -1,113 +1,85 @@
 import { prisma } from "../db/prisma.js";
 
-export async function getFundByName(
-    name: string
-) {
-    return prisma.fund.findFirst({
-        where: {
-            name: {
-                contains: name,
-                mode: "insensitive",
-            },
-        },
-    });
+export async function getFundByName(name: string) {
+  return prisma.fund.findFirst({
+    where: { name: { contains: name, mode: "insensitive" } },
+  });
+}
+
+async function getNavAt(fundId: string, date: Date, direction: "asc" | "desc") {
+  return prisma.fundNav.findFirst({
+    where: {
+      fundId,
+      date: direction === "asc" ? { gte: date } : { lte: date },
+    },
+    orderBy: { date: direction },
+  });
 }
 
 export async function getFundReturn(
-    fundName: string
+  fundName: string,
+  startDate?: Date,
+  endDate?: Date
 ) {
-    const fund =
-        await getFundByName(fundName);
+  const fund = await getFundByName(fundName);
+  if (!fund) return { error: `Fund not found: ${fundName}` };
 
-    if (!fund) {
-        throw new Error(
-            `Fund not found: ${fundName}`
-        );
-    }
+  const firstNav = startDate
+    ? await getNavAt(fund.id, startDate, "asc")
+    : await prisma.fundNav.findFirst({ where: { fundId: fund.id }, orderBy: { date: "asc" } });
 
-    const navs =
-        await prisma.fundNav.findMany({
-            where: {
-                fundId: fund.id,
-            },
-            orderBy: {
-                date: "asc",
-            },
-        });
+  const lastNav = endDate
+    ? await getNavAt(fund.id, endDate, "desc")
+    : await prisma.fundNav.findFirst({ where: { fundId: fund.id }, orderBy: { date: "desc" } });
 
-    if (navs.length < 2) {
-        throw new Error(
-            "Not enough NAV data"
-        );
-    }
+  if (!firstNav || !lastNav || firstNav.date.getTime() === lastNav.date.getTime()) {
+    return { error: "Not enough NAV data in the specified window" };
+  }
 
-    const firstNav = navs[0];
-    const lastNav = navs.at(-1);
+  const returnPct = ((lastNav.nav - firstNav.nav) / firstNav.nav) * 100;
 
-    if (!firstNav || !lastNav) {
-        throw new Error("Not enough NAV data");
-    }
-
-    const startNav = firstNav.nav;
-    const endNav = lastNav.nav;
-
-    const returnPct =
-        ((endNav - startNav) /
-            startNav) *
-        100;
-
-    return {
-        fund: fund.name,
-        startNav,
-        endNav,
-        returnPct,
-    };
+  return {
+    fund: fund.name,
+    startDate: firstNav.date,
+    startNav: firstNav.nav,
+    endDate: lastNav.date,
+    endNav: lastNav.nav,
+    returnPct: Math.round(returnPct * 100) / 100,
+  };
 }
 
-export async function rankFunds() {
-    const funds =
-        await prisma.fund.findMany({
-            include: {
-                navs: {
-                    orderBy: {
-                        date: "asc",
-                    },
-                },
-            },
-        });
+export async function rankFunds(startDate?: Date, endDate?: Date) {
+  const funds = await prisma.fund.findMany();
 
-    const rankings = funds
-        .map((fund) => {
-            if (fund.navs.length < 2) {
-                return null;
-            }
+  const results = await Promise.all(
+    funds.map(async (fund) => {
+      const firstNav = startDate
+        ? await getNavAt(fund.id, startDate, "asc")
+        : await prisma.fundNav.findFirst({ where: { fundId: fund.id }, orderBy: { date: "asc" } });
 
-            const firstNav = fund.navs[0];
-            const lastNav = fund.navs.at(-1);
+      const lastNav = endDate
+        ? await getNavAt(fund.id, endDate, "desc")
+        : await prisma.fundNav.findFirst({ where: { fundId: fund.id }, orderBy: { date: "desc" } });
 
-            if (!firstNav || !lastNav) {
-                return null;
-            }
+      if (!firstNav || !lastNav || firstNav.date.getTime() === lastNav.date.getTime()) {
+        return null;
+      }
 
-            const startNav = firstNav.nav;
-            const endNav = lastNav.nav;
+      const returnPct = ((lastNav.nav - firstNav.nav) / firstNav.nav) * 100;
+      return { fund: fund.name, returnPct: Math.round(returnPct * 100) / 100 };
+    })
+  );
 
-            const returnPct =
-                ((endNav - startNav) /
-                    startNav) *
-                100;
+  const ranked = results
+    .filter(Boolean)
+    .sort((a, b) => b!.returnPct - a!.returnPct) as { fund: string; returnPct: number }[];
 
-            return {
-                fund: fund.name,
-                returnPct,
-            };
-        })
-        .filter(Boolean)
-        .sort(
-            (a, b) =>
-                b!.returnPct -
-                a!.returnPct
-        );
+  if (ranked.length === 0) return { funds: [], spread: null };
 
-    return rankings;
+//   const spread = Math.round((ranked[0].returnPct - ranked[ranked.length - 1].returnPct) * 100) / 100;
+  const top = ranked[0];
+const bottom = ranked[ranked.length - 1];
+if (!top || !bottom) return { funds: ranked, spread: null };
+const spread = Math.round((top.returnPct - bottom.returnPct) * 100) / 100;
+  return { funds: ranked, spread };
 }

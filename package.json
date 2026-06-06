@@ -4,10 +4,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/mastra/index.ts",
+    "dev": "tsx watch src/index.ts",
     "ingest": "tsx scripts/ingest.ts",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "tsx src/index.ts",
+    "mastra:dev": "tsx watch src/mastra/index.ts",
+    "eval": "tsx eval/agentSmokeTest.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +23,7 @@
     "@ai-sdk/anthropic": "^3.0.81",
     "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/groq": "^3.0.39",
-    "@ai-sdk/openai": "^3.0.67",
+    "@ai-sdk/openai": "^3.0.68",
     "@mastra/core": "^1.38.0",
     "@mastra/duckdb": "^1.4.1",
     "@mastra/evals": "^1.2.4",
@@ -30,6 +32,7 @@
     "@mastra/memory": "^1.20.1",
     "@mastra/observability": "^1.14.1",
     "@prisma/client": "^6.19.3",
+    "ai": "^6.0.197",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

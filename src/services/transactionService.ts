@@ -7,18 +7,26 @@ export type TransactionFilters = {
   endDate?: Date;
 };
 
+function transferExclusionClause(filters: TransactionFilters): object {
+  // If a specific category is already filtered, don't add a second NOT clause
+  if (filters.category) return {};
+  return { NOT: { category: "transfer" } };
+}
+
 function buildWhere(
   filters: TransactionFilters
 ) {
   const where: any = {};
 
   if (filters.category) {
-    where.category = filters.category;
+    where.category = filters.category.toLowerCase();
   }
 
   if (filters.merchant) {
-    where.normalizedMerchant =
-      filters.merchant;
+    where.OR = [
+      { normalizedMerchant: { contains: filters.merchant.toUpperCase() } },
+      { merchant: { contains: filters.merchant, mode: "insensitive" } },
+    ];
   }
 
   if (
@@ -42,14 +50,13 @@ function buildWhere(
 }
 
 export async function getTransactions(
-  filters: TransactionFilters = {}
+  filters: TransactionFilters = {},
+  limit = 20
 ) {
   return prisma.transaction.findMany({
     where: buildWhere(filters),
-    take:10,
-    orderBy: {
-      date: "desc",
-    },
+    take: limit,
+    orderBy: { date: "desc" },
   });
 }
 
@@ -58,7 +65,7 @@ export async function getNetSpend(
 ) {
   const result =
     await prisma.transaction.aggregate({
-      where: buildWhere(filters),
+      where: { ...buildWhere(filters), ...transferExclusionClause(filters) },
       _sum: {
         amount: true,
       },
@@ -71,11 +78,20 @@ export async function getNetSpend(
 }
 
 export async function getTopMerchants(
-  limit = 5
+  limit = 5,
+  filters: Pick<TransactionFilters, "startDate" | "endDate"> = {}
 ) {
+  const dateWhere: any = {};
+  if (filters.startDate || filters.endDate) {
+    dateWhere.date = {};
+    if (filters.startDate) dateWhere.date.gte = filters.startDate;
+    if (filters.endDate)   dateWhere.date.lte = filters.endDate;
+  }
+
   const rows =
     await prisma.transaction.groupBy({
       by: ["normalizedMerchant"],
+      where: { NOT: { category: "transfer" }, ...dateWhere },
       _sum: {
         amount: true,
       },
@@ -119,9 +135,8 @@ export async function getBiggestExpense() {
   const transaction =
     await prisma.transaction.findFirst({
       where: {
-        amount: {
-          gt: 0,
-        },
+        amount: { gt: 0 },
+        NOT: { category: "transfer" },
       },
       orderBy: {
         amount: "desc",
@@ -142,9 +157,12 @@ export async function getBiggestExpense() {
   };
 }
 
-export async function getMonthlySpend() {
+export async function getMonthlySpend(category?: string) {
+  const where: any = { NOT: { category: "transfer" } };
+  if (category) where.category = category.toLowerCase();
   const transactions =
     await prisma.transaction.findMany({
+      where,
       select: {
         date: true,
         amount: true,

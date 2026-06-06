@@ -64,6 +64,52 @@ export async function getHoldingReturn(
   };
 }
 
+export async function getHoldingReturnByFundName(fundName: string) {
+  const holding = await prisma.holding.findFirst({
+    where: {
+      fund: {
+        name: { contains: fundName, mode: "insensitive" },
+      },
+    },
+    include: {
+      fund: {
+        include: {
+          navs: {
+            orderBy: { date: "desc" },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  if (!holding) {
+    return { error: `No holding found for fund matching "${fundName}"` };
+  }
+
+  const latestNav = holding.fund.navs[0];
+  if (!latestNav) {
+    return { error: `No NAV data available for ${holding.fund.name}` };
+  }
+
+  const cost = holding.units * holding.purchaseNav;
+  const currentValue = holding.units * latestNav.nav;
+  const gain = currentValue - cost;
+  const returnPct = (gain / cost) * 100;
+
+  return {
+    fund: holding.fund.name,
+    units: holding.units,
+    purchaseNav: holding.purchaseNav,
+    latestNav: latestNav.nav,
+    latestNavDate: latestNav.date,
+    cost: Math.round(cost * 100) / 100,
+    currentValue: Math.round(currentValue * 100) / 100,
+    gain: Math.round(gain * 100) / 100,
+    returnPct: Math.round(returnPct * 100) / 100,
+  };
+}
+
 export async function getPortfolioValue() {
   const holdings =
     await prisma.holding.findMany({
