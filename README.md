@@ -117,7 +117,7 @@ npm run eval
 kill %1
 ```
 
-Prints a `Passed: X/12` / `Failed: Y/12` summary. Target: ≥ 13/14.
+Prints a `Passed: X/14` / `Failed: Y/14` summary. Target: ≥ 13/14.
 
 ---
 
