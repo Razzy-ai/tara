@@ -117,11 +117,10 @@ npm run eval
 kill %1
 ```
 
-<<<<<<< HEAD
-Prints a `Passed: X/14` / `Failed: Y/14` summary. Target: ≥ 13/14.
-=======
+
+
 Prints a `Passed: X/14` / `Failed: Y/14` summary. Target: ≥ 14/14.
->>>>>>> 8ce655e (Switch to free OpenRouter model)
+
 
 ---
 
