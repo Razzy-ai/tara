@@ -117,16 +117,20 @@ npm run eval
 kill %1
 ```
 
+**Windows (CMD):** run `npm start` in one terminal, then in a second terminal:
 
+```bash
+npm run eval
+```
 
-Prints a `Passed: X/14` / `Failed: Y/14` summary. Target: ≥ 14/14.
+Prints a `Passed: X/14` / `Failed: Y/14` summary. Target: 14/14.
 
 
 ---
 
 ## Model / Provider
 
-The agent uses **OpenRouter** (`openai/gpt-oss-120b:free`) by default. Google Gemini (`gemini-2.5-flash`) support is present in `src/agents/taraAgent.ts` and can be enabled by setting `GOOGLE_GENERATIVE_AI_API_KEY` and switching the commented import.
+The agent uses **OpenRouter** (`nvidia/nemotron-3-ultra-550b-a55b:free`) by default. Google Gemini (`gemini-2.5-flash`) support is present in `src/agents/taraAgent.ts` and can be enabled by setting `GOOGLE_GENERATIVE_AI_API_KEY` and switching the commented import.
 
 ---
 
