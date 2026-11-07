@@ -49,7 +49,7 @@ RULES:
   // model: openrouter.chat("meta-llama/llama-3.3-70b-instruct:free"),  // Venice upstream rate-limited
   // model: openrouter.chat("google/gemini-2.0-flash-exp:free"),  // no longer available
   // .chat() forces the chat/completions endpoint; openrouter() alone hits the Responses API
-  model: openrouter.chat("openai/gpt-oss-120b:free"),
+  model: openrouter.chat("nvidia/nemotron-3-ultra-550b-a55b:free"),
 
   tools: {
     queryTransactions,

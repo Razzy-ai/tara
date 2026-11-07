@@ -20,3 +20,4 @@
 {"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"request_received","question":"How much did I spend on food?","timestamp":"2026-06-05T11:15:18.351Z"}
 {"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"agent_started"}
 {"requestId":"9f8f4a3e-261e-4c59-b312-1fa191f2dc3e","stage":"error","message":"Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details."}
+{"request_id":"472b7c2c-f8b4-4308-bdc5-4bde1fbb1885","question":"How much did I spend on food?","tools":["queryTransactions"],"tool_inputs":[{"tool":"queryTransactions","inputKeys":["startDate","endDate","category","operation","limit","merchant","compareCategory"],"operation":"netSpend"}],"tables_read":["Transaction"],"latency_ms":11468,"status":"success"}
